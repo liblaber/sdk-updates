@@ -35120,8 +35120,8 @@ var SdkEngines;
 })(SdkEngines || (exports.SdkEngines = SdkEngines = {}));
 var SdkEngineVersions;
 (function (SdkEngineVersions) {
-    SdkEngineVersions["CodeGen"] = "1.1.40";
-    SdkEngineVersions["SdkGen"] = "2.0.18";
+    SdkEngineVersions["CodeGen"] = "1.1.41";
+    SdkEngineVersions["SdkGen"] = "2.0.19";
 })(SdkEngineVersions || (exports.SdkEngineVersions = SdkEngineVersions = {}));
 exports.sdkLanguageEngineMap = {
     [language_1.Language.java]: SdkEngines.CodeGen,
