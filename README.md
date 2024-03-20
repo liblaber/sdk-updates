@@ -14,10 +14,9 @@ liblab.
 This is a simple way of keeping your SDKs up to date with the latest liblab
 releases.
 
-For more information about GitHub integration with liblab, check our docs:
-https://developers.liblab.com/tutorials/integrate-with-github-actions
+For more information about GitHub integration with liblab, check [our docs](https://developers.liblab.com/tutorials/integrate-with-github-actions).
 
-## Usage:
+## Usage
 
 Add this workflow to your control repository:
 
