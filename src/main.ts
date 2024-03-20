@@ -1,4 +1,6 @@
 import * as core from '@actions/core'
+import { setLanguagesForUpdate } from './set-languages-for-update'
+import { cmd } from './cmd'
 
 /**
  * The main function for the action.
@@ -16,10 +18,32 @@ export async function run(): Promise<void> {
     core.exportVariable('LIBLAB_TOKEN', liblabToken)
     core.exportVariable('GITHUB_TOKEN', githubToken)
 
-    // Set outputs for other workflow steps to use
-    core.setOutput('status', 'success')
+    const languagesToUpdate = await setLanguagesForUpdate()
+    if (!languagesToUpdate) {
+      core.info(
+        '************ No languages need an update. Skipping the builds. ************'
+      )
+      core.setOutput('status', 'skipped')
+      return
+    }
+    core.info(
+      `************ Languages that need update: ${languagesToUpdate.join(', ')} ************`
+    )
+
+    core.info('************ Building SDKs ************')
+    await cmd('npx', '--yes', 'liblab', 'build', '--yes')
+    core.info('************ Finished building SDKs ************')
+
+    core.info('************ Publishing PRs ************')
+    await cmd('npx', '--yes', 'liblab', 'pr')
+    core.info('************ Finished publishing PRs ************')
+
+    core.setOutput('status', `success`)
   } catch (error) {
     // Fail the workflow run if an error occurs
-    if (error instanceof Error) core.setFailed(error.message)
+    if (error instanceof Error) {
+      core.setOutput('status', 'failed')
+      core.setFailed(error.message)
+    }
   }
 }
