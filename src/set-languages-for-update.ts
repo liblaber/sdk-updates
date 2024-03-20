@@ -50,11 +50,12 @@ export async function setLanguagesForUpdate(): Promise<string[]> {
     const manifest = await fetchManifestForLanguage(language, liblabConfig)
     if (
       !manifest ||
-      (await shouldUpdateLanguage({
-        liblabVersion: liblabConfig.liblabVersion,
-        languageVersion: manifest.liblabVersion,
-        language
-      }))
+      (await shouldUpdateLanguage(
+        language,
+        manifest.liblabVersion,
+        liblabConfig.languageOptions[language].liblabVersion ||
+          liblabConfig.liblabVersion
+      ))
     ) {
       liblabConfig.languageOptions[language].sdkVersion =
         bumpSdkVersionOrDefault(liblabConfig, language)
@@ -89,13 +90,11 @@ async function fetchManifestForLanguage(
   }
 }
 
-async function shouldUpdateLanguage(args: {
+async function shouldUpdateLanguage(
+  language: Language,
+  languageVersion: string,
   liblabVersion: LiblabVersion
-  language: Language
-  languageVersion: string
-}): Promise<boolean> {
-  const { liblabVersion, language, languageVersion } = args
-
+): Promise<boolean> {
   const [latestCodeGenVersion, latestSdkGenVersion] = [
     SdkEngineVersions.CodeGen,
     SdkEngineVersions.SdkGen

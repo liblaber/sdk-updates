@@ -22,4 +22,5 @@ export type LiblabVersion = '1' | '2'
 export interface LanguageOption {
   githubRepoName: string
   sdkVersion: string
+  liblabVersion: LiblabVersion
 }
