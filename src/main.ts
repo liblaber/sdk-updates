@@ -1,5 +1,4 @@
 import * as core from '@actions/core'
-import { wait } from './wait'
 
 /**
  * The main function for the action.
@@ -7,18 +6,18 @@ import { wait } from './wait'
  */
 export async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
+    const liblabToken: string = core.getInput('liblab_token', {
+      required: true
+    })
+    const githubToken: string = core.getInput('github_token', {
+      required: true
+    })
 
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
-
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    core.exportVariable('LIBLAB_TOKEN', liblabToken)
+    core.exportVariable('GITHUB_TOKEN', githubToken)
 
     // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
+    core.setOutput('status', 'success')
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
