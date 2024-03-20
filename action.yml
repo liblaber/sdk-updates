@@ -1,4 +1,4 @@
-name: 'SDK updates'
+name: 'liblab SDK updates'
 description:
   'Github Action that builds SDKs and publishes PRs using latest liblab versions'
 author: 'liblaber'
