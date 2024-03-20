@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Generate SDKs and publish PRs
-        uses: liblaber/sdk-updates@v1
+        #        uses: liblaber/sdk-updates@v1
         with:
           liblab_token: ${{ secrets.LIBLAB_TOKEN }}
           github_token: ${{ secrets.LIBLAB_GITHUB_TOKEN }}
