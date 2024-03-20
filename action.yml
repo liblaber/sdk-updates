@@ -1,11 +1,11 @@
-name: 'Just testing typescript action'
-description: 'Provide a description here'
+name: 'Liblab SDK updates'
+description:
+  'Github Action that builds SDKs and publishes PRs using latest liblab versions'
 author: 'liblaber'
 
-# Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
-  icon: 'heart'
-  color: 'red'
+  icon: 'git-pull-request'
+  color: 'black'
 
 inputs:
   liblab_token:
