@@ -59,6 +59,7 @@ describe('bump SDK version or default', () => {
 
   it('should bump major SDK version when updating from liblabVersion 1 to 2', async () => {
     const liblabConfig = structuredClone(LIBLAB_CONFIG)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     liblabConfig.languageOptions.java!.liblabVersion = '2'
     const mockFetchCurrentSdkVersion = jest.fn(async () => '1.0.0')
     jest

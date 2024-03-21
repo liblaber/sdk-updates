@@ -38,12 +38,10 @@ export async function bumpSdkVersionOrDefault(
   const liblabVersion =
     languageOptions[language]?.liblabVersion || liblabConfig.liblabVersion
 
-  console.log(
-    `languageVersion major: ${semver.parse(languageVersion)?.major} LLVerMajor: ${semver.parse(liblabVersion)?.major}`
-  )
   const shouldBumpMajor =
     languageVersion &&
     semver.parse(languageVersion)?.major.toString() !== liblabVersion
+
   const bumpedSdkVersion = shouldBumpMajor
     ? `${sdkVersion.inc('major').major.toString()}.0.0`
     : sdkVersion.inc('patch').version

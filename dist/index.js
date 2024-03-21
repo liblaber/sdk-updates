@@ -35102,7 +35102,6 @@ async function bumpSdkVersionOrDefault(language, liblabConfig, languageVersion) 
         throw new Error(`The ${language} SDK version is not a valid semver format.`);
     }
     const liblabVersion = languageOptions[language]?.liblabVersion || liblabConfig.liblabVersion;
-    console.log(`languageVersion major: ${semver_1.default.parse(languageVersion)?.major} LLVerMajor: ${semver_1.default.parse(liblabVersion)?.major}`);
     const shouldBumpMajor = languageVersion &&
         semver_1.default.parse(languageVersion)?.major.toString() !== liblabVersion;
     const bumpedSdkVersion = shouldBumpMajor
