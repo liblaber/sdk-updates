@@ -34989,42 +34989,51 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setLanguagesForUpdate = void 0;
+exports.setLanguagesForUpdate = exports.bumpSdkVersionOrDefault = void 0;
 const rest_1 = __nccwpck_require__(5375);
 const semver_1 = __importDefault(__nccwpck_require__(1383));
 const sdk_language_engine_map_1 = __nccwpck_require__(1911);
 const read_liblab_config_1 = __nccwpck_require__(3029);
 const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
 const MANIFEST_PATH = '.manifest.json';
+const DEFAULT_SDK_VERSION = '1.0.0';
 const octokit = new rest_1.Octokit({ auth: process.env.GITHUB_TOKEN });
-function bumpSdkVersionOrDefault(liblabConfig, language) {
-    const currentSdkVersion = liblabConfig.languageOptions[language]?.sdkVersion;
+function bumpSdkVersionOrDefault(language, liblabConfig, languageVersion) {
+    const languageOptions = liblabConfig.languageOptions;
+    const currentSdkVersion = languageOptions[language]?.sdkVersion;
     if (!currentSdkVersion) {
-        console.log(`No SDK version set for ${language}, setting default version 1.0.0`);
-        return '1.0.0';
+        console.log(`No SDK version set for ${language}, setting default version ${DEFAULT_SDK_VERSION}`);
+        return DEFAULT_SDK_VERSION;
     }
     const sdkVersion = semver_1.default.parse(currentSdkVersion);
     if (!sdkVersion) {
         throw new Error(`The ${language} SDK version is not a valid semver format.`);
     }
-    const bumpedSdkVersion = sdkVersion.inc('patch').version;
+    const liblabVersion = languageOptions[language].liblabVersion || liblabConfig.liblabVersion;
+    const shouldBumpMajor = languageVersion &&
+        semver_1.default.parse(languageVersion)?.major !== semver_1.default.parse(liblabVersion)?.major;
+    const bumpedSdkVersion = shouldBumpMajor
+        ? sdkVersion.inc('major').version
+        : sdkVersion.inc('patch').version;
     console.log(`Bumping SDK version for ${language} from ${currentSdkVersion} to ${bumpedSdkVersion}`);
     return bumpedSdkVersion;
 }
+exports.bumpSdkVersionOrDefault = bumpSdkVersionOrDefault;
 async function setLanguagesForUpdate() {
     const liblabConfig = await (0, read_liblab_config_1.readLiblabConfig)();
     const languagesToUpdate = [];
     for (const language of liblabConfig.languages) {
         const manifest = await fetchManifestForLanguage(language, liblabConfig);
-        if (!manifest ||
-            (await shouldUpdateLanguage(language, manifest.liblabVersion, liblabConfig.languageOptions[language].liblabVersion ||
-                liblabConfig.liblabVersion))) {
+        if (
+        // No manifest means that the SDK hasn't been built before, therefor we want to update
+        !manifest ||
+            (await shouldUpdateLanguage(language, manifest.liblabVersion, liblabConfig))) {
             liblabConfig.languageOptions[language].sdkVersion =
-                bumpSdkVersionOrDefault(liblabConfig, language);
+                bumpSdkVersionOrDefault(language, liblabConfig, manifest?.liblabVersion);
             languagesToUpdate.push(language);
         }
     }
-    if (languagesToUpdate.length !== 0) {
+    if (languagesToUpdate.length > 0) {
         liblabConfig.languages = [...languagesToUpdate];
         await fs_extra_1.default.writeJson(read_liblab_config_1.LIBLAB_CONFIG_PATH, liblabConfig, { spaces: 2 });
     }
@@ -35044,13 +35053,15 @@ async function fetchManifestForLanguage(language, config) {
         console.log(`Unable to fetch .manifest.json file from ${config.publishing.githubOrg}/${config.languageOptions[language].githubRepoName}`);
     }
 }
-async function shouldUpdateLanguage(language, languageVersion, liblabVersion) {
+async function shouldUpdateLanguage(language, languageVersion, liblabConfig) {
     const [latestCodeGenVersion, latestSdkGenVersion] = [
         sdk_language_engine_map_1.SdkEngineVersions.CodeGen,
         sdk_language_engine_map_1.SdkEngineVersions.SdkGen
     ];
     const codeGenHasNewVersion = semver_1.default.gt(latestCodeGenVersion, languageVersion);
     const sdkGenHasNewVersion = semver_1.default.gt(latestSdkGenVersion, languageVersion);
+    const liblabVersion = liblabConfig.languageOptions[language].liblabVersion ||
+        liblabConfig.liblabVersion;
     if (liblabVersion === '1') {
         return ((codeGenHasNewVersion &&
             isSupported(sdk_language_engine_map_1.SdkEngines.CodeGen, language, liblabVersion)) ||

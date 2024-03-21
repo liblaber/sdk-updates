@@ -13,19 +13,23 @@ import fs from 'fs-extra'
 
 const MANIFEST_PATH = '.manifest.json'
 
+const DEFAULT_SDK_VERSION = '1.0.0'
+
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
 
-function bumpSdkVersionOrDefault(
+export function bumpSdkVersionOrDefault(
+  language: Language,
   liblabConfig: LibLabConfig,
-  language: Language
+  languageVersion?: string
 ): string {
-  const currentSdkVersion = liblabConfig.languageOptions[language]?.sdkVersion
+  const languageOptions = liblabConfig.languageOptions
+  const currentSdkVersion = languageOptions[language]?.sdkVersion
 
   if (!currentSdkVersion) {
     console.log(
-      `No SDK version set for ${language}, setting default version 1.0.0`
+      `No SDK version set for ${language}, setting default version ${DEFAULT_SDK_VERSION}`
     )
-    return '1.0.0'
+    return DEFAULT_SDK_VERSION
   }
 
   const sdkVersion = semver.parse(currentSdkVersion)
@@ -34,7 +38,16 @@ function bumpSdkVersionOrDefault(
     throw new Error(`The ${language} SDK version is not a valid semver format.`)
   }
 
-  const bumpedSdkVersion = sdkVersion.inc('patch').version
+  const liblabVersion =
+    languageOptions[language].liblabVersion || liblabConfig.liblabVersion
+
+  const shouldBumpMajor =
+    languageVersion &&
+    semver.parse(languageVersion)?.major !== semver.parse(liblabVersion)?.major
+  const bumpedSdkVersion = shouldBumpMajor
+    ? sdkVersion.inc('major').version
+    : sdkVersion.inc('patch').version
+
   console.log(
     `Bumping SDK version for ${language} from ${currentSdkVersion} to ${bumpedSdkVersion}`
   )
@@ -49,21 +62,21 @@ export async function setLanguagesForUpdate(): Promise<string[]> {
   for (const language of liblabConfig.languages) {
     const manifest = await fetchManifestForLanguage(language, liblabConfig)
     if (
+      // No manifest means that the SDK hasn't been built before, therefor we want to update
       !manifest ||
       (await shouldUpdateLanguage(
         language,
         manifest.liblabVersion,
-        liblabConfig.languageOptions[language].liblabVersion ||
-          liblabConfig.liblabVersion
+        liblabConfig
       ))
     ) {
       liblabConfig.languageOptions[language].sdkVersion =
-        bumpSdkVersionOrDefault(liblabConfig, language)
+        bumpSdkVersionOrDefault(language, liblabConfig, manifest?.liblabVersion)
       languagesToUpdate.push(language)
     }
   }
 
-  if (languagesToUpdate.length !== 0) {
+  if (languagesToUpdate.length > 0) {
     liblabConfig.languages = [...languagesToUpdate]
     await fs.writeJson(LIBLAB_CONFIG_PATH, liblabConfig, { spaces: 2 })
   }
@@ -93,7 +106,7 @@ async function fetchManifestForLanguage(
 async function shouldUpdateLanguage(
   language: Language,
   languageVersion: string,
-  liblabVersion: LiblabVersion
+  liblabConfig: LibLabConfig
 ): Promise<boolean> {
   const [latestCodeGenVersion, latestSdkGenVersion] = [
     SdkEngineVersions.CodeGen,
@@ -102,6 +115,10 @@ async function shouldUpdateLanguage(
 
   const codeGenHasNewVersion = semver.gt(latestCodeGenVersion, languageVersion)
   const sdkGenHasNewVersion = semver.gt(latestSdkGenVersion, languageVersion)
+
+  const liblabVersion =
+    liblabConfig.languageOptions[language].liblabVersion ||
+    liblabConfig.liblabVersion
 
   if (liblabVersion === '1') {
     return (
