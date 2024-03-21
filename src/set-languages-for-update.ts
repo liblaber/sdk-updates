@@ -1,5 +1,3 @@
-import { Octokit } from '@octokit/rest'
-import { Manifest } from './types/manifest'
 import { LibLabConfig, LiblabVersion } from './types/liblab-config'
 import { Language } from './types/language'
 import semver from 'semver'
@@ -10,20 +8,19 @@ import {
 } from './types/sdk-language-engine-map'
 import { LIBLAB_CONFIG_PATH, readLiblabConfig } from './read-liblab-config'
 import fs from 'fs-extra'
+import {
+  fetchCurrentSdkVersion,
+  fetchManifestFile
+} from './fetch-git-repo-files'
+import { DEFAULT_SDK_VERSION } from './constants'
 
-const MANIFEST_PATH = '.manifest.json'
-
-const DEFAULT_SDK_VERSION = '1.0.0'
-
-const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
-
-export function bumpSdkVersionOrDefault(
+export async function bumpSdkVersionOrDefault(
   language: Language,
   liblabConfig: LibLabConfig,
   languageVersion?: string
-): string {
+): Promise<string> {
   const languageOptions = liblabConfig.languageOptions
-  const currentSdkVersion = languageOptions[language]?.sdkVersion
+  const currentSdkVersion = await fetchCurrentSdkVersion(language, liblabConfig)
 
   if (!currentSdkVersion) {
     console.log(
@@ -39,13 +36,16 @@ export function bumpSdkVersionOrDefault(
   }
 
   const liblabVersion =
-    languageOptions[language].liblabVersion || liblabConfig.liblabVersion
+    languageOptions[language]?.liblabVersion || liblabConfig.liblabVersion
 
+  console.log(
+    `languageVersion major: ${semver.parse(languageVersion)?.major} LLVerMajor: ${semver.parse(liblabVersion)?.major}`
+  )
   const shouldBumpMajor =
     languageVersion &&
-    semver.parse(languageVersion)?.major !== semver.parse(liblabVersion)?.major
+    semver.parse(languageVersion)?.major.toString() !== liblabVersion
   const bumpedSdkVersion = shouldBumpMajor
-    ? sdkVersion.inc('major').version
+    ? `${sdkVersion.inc('major').major.toString()}.0.0`
     : sdkVersion.inc('patch').version
 
   console.log(
@@ -60,7 +60,27 @@ export async function setLanguagesForUpdate(): Promise<string[]> {
   const languagesToUpdate = []
 
   for (const language of liblabConfig.languages) {
-    const manifest = await fetchManifestForLanguage(language, liblabConfig)
+    const languageOption = liblabConfig.languageOptions[language]
+
+    if (!languageOption) {
+      console.log(
+        `${language} does not have languageOptions.${language} defined. Skipping ${language} SDK updates.`
+      )
+      continue
+    }
+
+    if (!languageOption.githubRepoName) {
+      console.log(
+        `${language} does not have languageOptions.${language}.githubRepoName defined. Skipping ${language} SDK updates.`
+      )
+      continue
+    }
+
+    const manifest = await fetchManifestFile(
+      liblabConfig.publishing.githubOrg,
+      languageOption.githubRepoName
+    )
+
     if (
       // No manifest means that the SDK hasn't been built before, therefor we want to update
       !manifest ||
@@ -70,8 +90,11 @@ export async function setLanguagesForUpdate(): Promise<string[]> {
         liblabConfig
       ))
     ) {
-      liblabConfig.languageOptions[language].sdkVersion =
-        bumpSdkVersionOrDefault(language, liblabConfig, manifest?.liblabVersion)
+      languageOption.sdkVersion = await bumpSdkVersionOrDefault(
+        language,
+        liblabConfig,
+        manifest?.liblabVersion
+      )
       languagesToUpdate.push(language)
     }
   }
@@ -82,25 +105,6 @@ export async function setLanguagesForUpdate(): Promise<string[]> {
   }
 
   return languagesToUpdate
-}
-
-async function fetchManifestForLanguage(
-  language: Language,
-  config: LibLabConfig
-): Promise<Manifest | undefined> {
-  try {
-    const remoteManifestJson = await fetchFileFromBranch({
-      owner: config.publishing.githubOrg,
-      path: MANIFEST_PATH,
-      repo: config.languageOptions[language].githubRepoName
-    })
-
-    return JSON.parse(remoteManifestJson)
-  } catch (error) {
-    console.log(
-      `Unable to fetch .manifest.json file from ${config.publishing.githubOrg}/${config.languageOptions[language].githubRepoName}`
-    )
-  }
 }
 
 async function shouldUpdateLanguage(
@@ -117,7 +121,7 @@ async function shouldUpdateLanguage(
   const sdkGenHasNewVersion = semver.gt(latestSdkGenVersion, languageVersion)
 
   const liblabVersion =
-    liblabConfig.languageOptions[language].liblabVersion ||
+    liblabConfig.languageOptions[language]?.liblabVersion ||
     liblabConfig.liblabVersion
 
   if (liblabVersion === '1') {
@@ -146,28 +150,4 @@ function isSupported(
   } catch (e) {
     return false
   }
-}
-
-async function fetchFileFromBranch({
-  owner,
-  path,
-  repo
-}: {
-  owner: string
-  path: string
-  repo: string
-}): Promise<string> {
-  const { data } = await octokit.repos.getContent({
-    owner,
-    path,
-    repo
-  })
-
-  if (Array.isArray(data) || data.type !== 'file' || data.size === 0) {
-    throw new Error(
-      `Could not read content of file ${path} from repository ${repo}`
-    )
-  }
-
-  return Buffer.from(data.content, 'base64').toString('utf8')
 }

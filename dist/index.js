@@ -34876,6 +34876,100 @@ exports.cmd = cmd;
 
 /***/ }),
 
+/***/ 9042:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DEFAULT_SDK_VERSION = exports.MANIFEST_PATH = void 0;
+exports.MANIFEST_PATH = '.manifest.json';
+exports.DEFAULT_SDK_VERSION = '1.0.0';
+
+
+/***/ }),
+
+/***/ 4038:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.fetchFileFromBranch = exports.fetchManifestFile = exports.fetchCurrentSdkVersion = void 0;
+const language_1 = __nccwpck_require__(7930);
+const rest_1 = __nccwpck_require__(5375);
+const constants_1 = __nccwpck_require__(9042);
+const octokit = new rest_1.Octokit({ auth: process.env.GITHUB_TOKEN });
+async function fetchAndParseVersion(language, githubOrg, githubRepoName) {
+    switch (language) {
+        case language_1.Language.java: {
+            const pomXml = await fetchFileFromBranch({
+                owner: githubOrg,
+                path: 'pom.xml',
+                repo: githubRepoName
+            });
+            const javaSdkVersionMatch = pomXml.match(/<version>([\d.]+)<\/version>/);
+            return javaSdkVersionMatch ? javaSdkVersionMatch[1] : constants_1.DEFAULT_SDK_VERSION;
+        }
+        case language_1.Language.typescript: {
+            const packageJsonContent = await fetchFileFromBranch({
+                owner: githubOrg,
+                path: 'package.json',
+                repo: githubRepoName
+            });
+            const packageJson = JSON.parse(packageJsonContent);
+            return packageJson.version || constants_1.DEFAULT_SDK_VERSION;
+        }
+        default: {
+            return constants_1.DEFAULT_SDK_VERSION;
+        }
+    }
+}
+async function fetchCurrentSdkVersion(language, liblabConfig) {
+    const languageOption = liblabConfig.languageOptions[language];
+    if (!languageOption || !languageOption.githubRepoName) {
+        console.log(`Unable to fetch current ${language} SDK version. No languageOption or githubRepoName defined. Defaulting to ${constants_1.DEFAULT_SDK_VERSION}.`);
+        return constants_1.DEFAULT_SDK_VERSION;
+    }
+    try {
+        return await fetchAndParseVersion(language, liblabConfig.publishing.githubOrg, languageOption.githubRepoName);
+    }
+    catch (error) {
+        console.log(`Unable to fetch current ${language} SDK version. Defaulting to ${constants_1.DEFAULT_SDK_VERSION}.`);
+        return constants_1.DEFAULT_SDK_VERSION;
+    }
+}
+exports.fetchCurrentSdkVersion = fetchCurrentSdkVersion;
+async function fetchManifestFile(githubOrg, githubRepoName) {
+    try {
+        const remoteManifestJson = await fetchFileFromBranch({
+            owner: githubOrg,
+            path: constants_1.MANIFEST_PATH,
+            repo: githubRepoName
+        });
+        return JSON.parse(remoteManifestJson);
+    }
+    catch (error) {
+        console.log(`Unable to fetch .manifest.json file from ${githubOrg}/${githubRepoName}`);
+    }
+}
+exports.fetchManifestFile = fetchManifestFile;
+async function fetchFileFromBranch({ owner, path, repo }) {
+    const { data } = await octokit.repos.getContent({
+        owner,
+        path,
+        repo
+    });
+    if (Array.isArray(data) || data.type !== 'file' || data.size === 0) {
+        throw new Error(`Could not read content of file ${path} from repository ${repo}`);
+    }
+    return Buffer.from(data.content, 'base64').toString('utf8');
+}
+exports.fetchFileFromBranch = fetchFileFromBranch;
+
+
+/***/ }),
+
 /***/ 399:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -34990,30 +35084,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.setLanguagesForUpdate = exports.bumpSdkVersionOrDefault = void 0;
-const rest_1 = __nccwpck_require__(5375);
 const semver_1 = __importDefault(__nccwpck_require__(1383));
 const sdk_language_engine_map_1 = __nccwpck_require__(1911);
 const read_liblab_config_1 = __nccwpck_require__(3029);
 const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
-const MANIFEST_PATH = '.manifest.json';
-const DEFAULT_SDK_VERSION = '1.0.0';
-const octokit = new rest_1.Octokit({ auth: process.env.GITHUB_TOKEN });
-function bumpSdkVersionOrDefault(language, liblabConfig, languageVersion) {
+const fetch_git_repo_files_1 = __nccwpck_require__(4038);
+const constants_1 = __nccwpck_require__(9042);
+async function bumpSdkVersionOrDefault(language, liblabConfig, languageVersion) {
     const languageOptions = liblabConfig.languageOptions;
-    const currentSdkVersion = languageOptions[language]?.sdkVersion;
+    const currentSdkVersion = await (0, fetch_git_repo_files_1.fetchCurrentSdkVersion)(language, liblabConfig);
     if (!currentSdkVersion) {
-        console.log(`No SDK version set for ${language}, setting default version ${DEFAULT_SDK_VERSION}`);
-        return DEFAULT_SDK_VERSION;
+        console.log(`No SDK version set for ${language}, setting default version ${constants_1.DEFAULT_SDK_VERSION}`);
+        return constants_1.DEFAULT_SDK_VERSION;
     }
     const sdkVersion = semver_1.default.parse(currentSdkVersion);
     if (!sdkVersion) {
         throw new Error(`The ${language} SDK version is not a valid semver format.`);
     }
-    const liblabVersion = languageOptions[language].liblabVersion || liblabConfig.liblabVersion;
+    const liblabVersion = languageOptions[language]?.liblabVersion || liblabConfig.liblabVersion;
+    console.log(`languageVersion major: ${semver_1.default.parse(languageVersion)?.major} LLVerMajor: ${semver_1.default.parse(liblabVersion)?.major}`);
     const shouldBumpMajor = languageVersion &&
-        semver_1.default.parse(languageVersion)?.major !== semver_1.default.parse(liblabVersion)?.major;
+        semver_1.default.parse(languageVersion)?.major.toString() !== liblabVersion;
     const bumpedSdkVersion = shouldBumpMajor
-        ? sdkVersion.inc('major').version
+        ? `${sdkVersion.inc('major').major.toString()}.0.0`
         : sdkVersion.inc('patch').version;
     console.log(`Bumping SDK version for ${language} from ${currentSdkVersion} to ${bumpedSdkVersion}`);
     return bumpedSdkVersion;
@@ -35023,13 +35116,21 @@ async function setLanguagesForUpdate() {
     const liblabConfig = await (0, read_liblab_config_1.readLiblabConfig)();
     const languagesToUpdate = [];
     for (const language of liblabConfig.languages) {
-        const manifest = await fetchManifestForLanguage(language, liblabConfig);
+        const languageOption = liblabConfig.languageOptions[language];
+        if (!languageOption) {
+            console.log(`${language} does not have languageOptions.${language} defined. Skipping ${language} SDK updates.`);
+            continue;
+        }
+        if (!languageOption.githubRepoName) {
+            console.log(`${language} does not have languageOptions.${language}.githubRepoName defined. Skipping ${language} SDK updates.`);
+            continue;
+        }
+        const manifest = await (0, fetch_git_repo_files_1.fetchManifestFile)(liblabConfig.publishing.githubOrg, languageOption.githubRepoName);
         if (
         // No manifest means that the SDK hasn't been built before, therefor we want to update
         !manifest ||
             (await shouldUpdateLanguage(language, manifest.liblabVersion, liblabConfig))) {
-            liblabConfig.languageOptions[language].sdkVersion =
-                bumpSdkVersionOrDefault(language, liblabConfig, manifest?.liblabVersion);
+            languageOption.sdkVersion = await bumpSdkVersionOrDefault(language, liblabConfig, manifest?.liblabVersion);
             languagesToUpdate.push(language);
         }
     }
@@ -35040,19 +35141,6 @@ async function setLanguagesForUpdate() {
     return languagesToUpdate;
 }
 exports.setLanguagesForUpdate = setLanguagesForUpdate;
-async function fetchManifestForLanguage(language, config) {
-    try {
-        const remoteManifestJson = await fetchFileFromBranch({
-            owner: config.publishing.githubOrg,
-            path: MANIFEST_PATH,
-            repo: config.languageOptions[language].githubRepoName
-        });
-        return JSON.parse(remoteManifestJson);
-    }
-    catch (error) {
-        console.log(`Unable to fetch .manifest.json file from ${config.publishing.githubOrg}/${config.languageOptions[language].githubRepoName}`);
-    }
-}
 async function shouldUpdateLanguage(language, languageVersion, liblabConfig) {
     const [latestCodeGenVersion, latestSdkGenVersion] = [
         sdk_language_engine_map_1.SdkEngineVersions.CodeGen,
@@ -35060,7 +35148,7 @@ async function shouldUpdateLanguage(language, languageVersion, liblabConfig) {
     ];
     const codeGenHasNewVersion = semver_1.default.gt(latestCodeGenVersion, languageVersion);
     const sdkGenHasNewVersion = semver_1.default.gt(latestSdkGenVersion, languageVersion);
-    const liblabVersion = liblabConfig.languageOptions[language].liblabVersion ||
+    const liblabVersion = liblabConfig.languageOptions[language]?.liblabVersion ||
         liblabConfig.liblabVersion;
     if (liblabVersion === '1') {
         return ((codeGenHasNewVersion &&
@@ -35080,17 +35168,6 @@ function isSupported(sdkEngine, language, liblab) {
     catch (e) {
         return false;
     }
-}
-async function fetchFileFromBranch({ owner, path, repo }) {
-    const { data } = await octokit.repos.getContent({
-        owner,
-        path,
-        repo
-    });
-    if (Array.isArray(data) || data.type !== 'file' || data.size === 0) {
-        throw new Error(`Could not read content of file ${path} from repository ${repo}`);
-    }
-    return Buffer.from(data.content, 'base64').toString('utf8');
 }
 
 
