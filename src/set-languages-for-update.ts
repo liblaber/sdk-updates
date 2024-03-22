@@ -103,6 +103,8 @@ export async function setLanguagesForUpdate(): Promise<string[]> {
         manifest?.liblabVersion
       )
       languagesToUpdate.push(language)
+    } else {
+      console.log(`SDK in ${language} is already generated with latest liblab.`)
     }
   }
 

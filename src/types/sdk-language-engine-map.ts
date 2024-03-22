@@ -8,7 +8,7 @@ export enum SdkEngines {
 
 export enum SdkEngineVersions {
   CodeGen = '1.1.41',
-  SdkGen = '2.0.19'
+  SdkGen = '2.0.20'
 }
 
 export const sdkLanguageEngineMap = {

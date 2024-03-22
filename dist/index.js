@@ -34872,7 +34872,7 @@ exports.cmd = cmd;
 function handleProcessData(data) {
     const lines = data.toString().split('\n');
     for (const line of lines) {
-        if (!cmdOutput.includes(line)) {
+        if (!cmdOutput.includes(line) || cmdOutput.includes('Owner:')) {
             console.log(line);
             cmdOutput.push(line);
         }
@@ -35188,6 +35188,9 @@ async function setLanguagesForUpdate() {
             languageOption.sdkVersion = await bumpSdkVersionOrDefault(language, liblabConfig.publishing.githubOrg, languageOption.githubRepoName, liblabVersion, manifest?.liblabVersion);
             languagesToUpdate.push(language);
         }
+        else {
+            console.log(`SDK in ${language} is already generated with latest liblab.`);
+        }
     }
     if (languagesToUpdate.length > 0) {
         liblabConfig.languages = [...languagesToUpdate];
@@ -35266,7 +35269,7 @@ var SdkEngines;
 var SdkEngineVersions;
 (function (SdkEngineVersions) {
     SdkEngineVersions["CodeGen"] = "1.1.41";
-    SdkEngineVersions["SdkGen"] = "2.0.19";
+    SdkEngineVersions["SdkGen"] = "2.0.20";
 })(SdkEngineVersions || (exports.SdkEngineVersions = SdkEngineVersions = {}));
 exports.sdkLanguageEngineMap = {
     [language_1.Language.java]: SdkEngines.CodeGen,
