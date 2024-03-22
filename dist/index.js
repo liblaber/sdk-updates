@@ -34847,17 +34847,12 @@ const process_1 = __importDefault(__nccwpck_require__(7282));
 const child_process_1 = __nccwpck_require__(2081);
 async function cmd(...command) {
     const spawnProcess = (0, child_process_1.spawn)(command[0], command.slice(1), {
+        stdio: 'inherit',
         env: {
             ...process_1.default.env
         }
     });
     return new Promise((resolve, reject) => {
-        spawnProcess.stdout.on('data', data => {
-            process_1.default.stdout.write(data.toString());
-        });
-        spawnProcess.stderr.on('data', data => {
-            process_1.default.stderr.write(data.toString());
-        });
         spawnProcess.on('exit', code => {
             if (code === 0) {
                 resolve(code);
@@ -35049,20 +35044,24 @@ exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const set_languages_for_update_1 = __nccwpck_require__(181);
 const cmd_1 = __nccwpck_require__(5529);
+const LIBLAB_TOKEN_INPUT_KEY = 'liblab_token';
+const LIBLAB_GITHUB_TOKEN_INPUT_KEY = 'liblab_github_token';
+const GITHUB_TOKEN_ENV_VAR_NAME = 'GITHUB_TOKEN';
+const LIBLAB_TOKEN_ENV_VAR_NAME = 'LIBLAB_TOKEN';
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 async function run() {
     try {
-        const liblabToken = core.getInput('liblab_token', {
+        const liblabToken = core.getInput(LIBLAB_TOKEN_INPUT_KEY, {
             required: true
         });
-        const githubToken = core.getInput('github_token', {
+        const liblabGithubToken = core.getInput(LIBLAB_GITHUB_TOKEN_INPUT_KEY, {
             required: true
         });
-        core.exportVariable('LIBLAB_TOKEN', liblabToken);
-        core.exportVariable('GITHUB_TOKEN', githubToken);
+        core.exportVariable(LIBLAB_TOKEN_ENV_VAR_NAME, liblabToken);
+        core.exportVariable(GITHUB_TOKEN_ENV_VAR_NAME, liblabGithubToken);
         const languagesToUpdate = await (0, set_languages_for_update_1.setLanguagesForUpdate)();
         if (!languagesToUpdate) {
             core.info('************ No languages need an update. Skipping the builds. ************');
@@ -35142,15 +35141,16 @@ async function bumpSdkVersionOrDefault(language, githubOrg, githubRepoName, libl
         console.log(`No SDK version set for ${language}, setting default version ${constants_1.DEFAULT_SDK_VERSION}`);
         return constants_1.DEFAULT_SDK_VERSION;
     }
-    const sdkVersion = semver_1.default.parse(currentSdkVersion);
-    if (!sdkVersion) {
-        throw new Error(`The ${language} SDK version is not a valid semver format.`);
+    const currentSdkVersionSemVer = semver_1.default.parse(currentSdkVersion);
+    if (!currentSdkVersionSemVer) {
+        console.log(`The ${language} SDK version ${currentSdkVersion} is not a valid semver format. Defaulting to ${constants_1.DEFAULT_SDK_VERSION}.`);
+        return constants_1.DEFAULT_SDK_VERSION;
     }
     const shouldBumpMajor = languageVersion &&
         semver_1.default.parse(languageVersion)?.major.toString() !== liblabVersion;
     const bumpedSdkVersion = shouldBumpMajor
-        ? `${sdkVersion.inc('major').major.toString()}.0.0`
-        : sdkVersion.inc('patch').version;
+        ? `${currentSdkVersionSemVer.inc('major').major.toString()}.0.0`
+        : currentSdkVersionSemVer.inc('patch').version;
     console.log(`Bumping ${shouldBumpMajor ? 'major' : 'patch'} SDK version for ${language} from ${currentSdkVersion} to ${bumpedSdkVersion}`);
     return bumpedSdkVersion;
 }

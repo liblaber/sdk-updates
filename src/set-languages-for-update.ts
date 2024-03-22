@@ -34,10 +34,13 @@ export async function bumpSdkVersionOrDefault(
     return DEFAULT_SDK_VERSION
   }
 
-  const sdkVersion = semver.parse(currentSdkVersion)
+  const currentSdkVersionSemVer = semver.parse(currentSdkVersion)
 
-  if (!sdkVersion) {
-    throw new Error(`The ${language} SDK version is not a valid semver format.`)
+  if (!currentSdkVersionSemVer) {
+    console.log(
+      `The ${language} SDK version ${currentSdkVersion} is not a valid semver format. Defaulting to ${DEFAULT_SDK_VERSION}.`
+    )
+    return DEFAULT_SDK_VERSION
   }
 
   const shouldBumpMajor =
@@ -45,8 +48,8 @@ export async function bumpSdkVersionOrDefault(
     semver.parse(languageVersion)?.major.toString() !== liblabVersion
 
   const bumpedSdkVersion = shouldBumpMajor
-    ? `${sdkVersion.inc('major').major.toString()}.0.0`
-    : sdkVersion.inc('patch').version
+    ? `${currentSdkVersionSemVer.inc('major').major.toString()}.0.0`
+    : currentSdkVersionSemVer.inc('patch').version
 
   console.log(
     `Bumping ${shouldBumpMajor ? 'major' : 'patch'} SDK version for ${language} from ${currentSdkVersion} to ${bumpedSdkVersion}`
