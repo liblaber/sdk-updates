@@ -61,7 +61,7 @@ describe('bump SDK version or default', () => {
     const liblabConfig = structuredClone(LIBLAB_CONFIG)
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     liblabConfig.languageOptions.java!.liblabVersion = '2'
-    const mockFetchCurrentSdkVersion = jest.fn(async () => '1.0.0')
+    const mockFetchCurrentSdkVersion = jest.fn(async () => '3.5.2')
     jest
       .spyOn(fetchGitRepoFiles, 'fetchCurrentSdkVersion')
       .mockImplementation(mockFetchCurrentSdkVersion)
@@ -71,6 +71,6 @@ describe('bump SDK version or default', () => {
       '1.5.2'
     )
 
-    expect(bumpedSdkVersion).toEqual('2.0.0')
+    expect(bumpedSdkVersion).toEqual('4.0.0')
   })
 })
