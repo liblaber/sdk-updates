@@ -4,8 +4,8 @@ description:
 author: 'liblaber'
 
 branding:
-  icon: 'git-pull-request'
-  color: 'black'
+  icon: https://pbs.twimg.com/profile_images/1529476217170165760/M55WzgYB_400x400.jpg
+  color: 'white'
 
 inputs:
   liblab_token:
