@@ -4,7 +4,7 @@ description:
 author: 'liblaber'
 
 branding:
-  icon: https://pbs.twimg.com/profile_images/1529476217170165760/M55WzgYB_400x400.jpg
+  icon: 'git-pull-request'
   color: 'white'
 
 inputs:
