@@ -1,62 +1,44 @@
 import { Language } from './types/language'
-import { LibLabConfig } from './types/liblab-config'
 import { Manifest } from './types/manifest'
 import { Octokit } from '@octokit/rest'
 import { DEFAULT_SDK_VERSION, MANIFEST_PATH } from './constants'
 
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
 
-async function fetchAndParseVersion(
+export async function fetchCurrentSdkVersion(
   language: Language,
   githubOrg: string,
   githubRepoName: string
 ): Promise<string> {
-  switch (language) {
-    case Language.java: {
-      const pomXml = await fetchFileFromBranch({
-        owner: githubOrg,
-        path: 'pom.xml',
-        repo: githubRepoName
-      })
-
-      const javaSdkVersionMatch = pomXml.match(/<version>([\d.]+)<\/version>/)
-      return javaSdkVersionMatch ? javaSdkVersionMatch[1] : DEFAULT_SDK_VERSION
-    }
-    case Language.typescript: {
-      const packageJsonContent = await fetchFileFromBranch({
-        owner: githubOrg,
-        path: 'package.json',
-        repo: githubRepoName
-      })
-
-      const packageJson = JSON.parse(packageJsonContent)
-
-      return packageJson.version || DEFAULT_SDK_VERSION
-    }
-    default: {
-      return DEFAULT_SDK_VERSION
-    }
-  }
-}
-
-export async function fetchCurrentSdkVersion(
-  language: Language,
-  liblabConfig: LibLabConfig
-): Promise<string> {
-  const languageOption = liblabConfig.languageOptions[language]
-  if (!languageOption || !languageOption.githubRepoName) {
-    console.log(
-      `Unable to fetch current ${language} SDK version. No languageOption or githubRepoName defined. Defaulting to ${DEFAULT_SDK_VERSION}.`
-    )
-    return DEFAULT_SDK_VERSION
-  }
-
   try {
-    return await fetchAndParseVersion(
-      language,
-      liblabConfig.publishing.githubOrg,
-      languageOption.githubRepoName
-    )
+    switch (language) {
+      case Language.java: {
+        const pomXml = await fetchFileFromBranch({
+          owner: githubOrg,
+          path: 'pom.xml',
+          repo: githubRepoName
+        })
+
+        const javaSdkVersionMatch = pomXml.match(/<version>([\d.]+)<\/version>/)
+        return javaSdkVersionMatch
+          ? javaSdkVersionMatch[1]
+          : DEFAULT_SDK_VERSION
+      }
+      case Language.typescript: {
+        const packageJsonContent = await fetchFileFromBranch({
+          owner: githubOrg,
+          path: 'package.json',
+          repo: githubRepoName
+        })
+
+        const packageJson = JSON.parse(packageJsonContent)
+
+        return packageJson.version || DEFAULT_SDK_VERSION
+      }
+      default: {
+        return DEFAULT_SDK_VERSION
+      }
+    }
   } catch (error) {
     console.log(
       `Unable to fetch current ${language} SDK version. Defaulting to ${DEFAULT_SDK_VERSION}.`

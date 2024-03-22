@@ -16,11 +16,16 @@ import { DEFAULT_SDK_VERSION } from './constants'
 
 export async function bumpSdkVersionOrDefault(
   language: Language,
-  liblabConfig: LibLabConfig,
+  githubOrg: string,
+  githubRepoName: string,
+  liblabVersion: LiblabVersion,
   languageVersion?: string
 ): Promise<string> {
-  const languageOptions = liblabConfig.languageOptions
-  const currentSdkVersion = await fetchCurrentSdkVersion(language, liblabConfig)
+  const currentSdkVersion = await fetchCurrentSdkVersion(
+    language,
+    githubOrg,
+    githubRepoName
+  )
 
   if (!currentSdkVersion) {
     console.log(
@@ -35,9 +40,6 @@ export async function bumpSdkVersionOrDefault(
     throw new Error(`The ${language} SDK version is not a valid semver format.`)
   }
 
-  const liblabVersion =
-    languageOptions[language]?.liblabVersion || liblabConfig.liblabVersion
-
   const shouldBumpMajor =
     languageVersion &&
     semver.parse(languageVersion)?.major.toString() !== liblabVersion
@@ -47,7 +49,7 @@ export async function bumpSdkVersionOrDefault(
     : sdkVersion.inc('patch').version
 
   console.log(
-    `Bumping SDK version for ${language} from ${currentSdkVersion} to ${bumpedSdkVersion}`
+    `Bumping ${shouldBumpMajor ? 'major' : 'patch'} SDK version for ${language} from ${currentSdkVersion} to ${bumpedSdkVersion}`
   )
 
   return bumpedSdkVersion
@@ -88,9 +90,13 @@ export async function setLanguagesForUpdate(): Promise<string[]> {
         liblabConfig
       ))
     ) {
+      const liblabVersion =
+        languageOption.liblabVersion || liblabConfig.liblabVersion || '1'
       languageOption.sdkVersion = await bumpSdkVersionOrDefault(
         language,
-        liblabConfig,
+        liblabConfig.publishing.githubOrg,
+        languageOption.githubRepoName,
+        liblabVersion,
         manifest?.liblabVersion
       )
       languagesToUpdate.push(language)

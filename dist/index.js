@@ -34900,39 +34900,33 @@ const language_1 = __nccwpck_require__(7930);
 const rest_1 = __nccwpck_require__(5375);
 const constants_1 = __nccwpck_require__(9042);
 const octokit = new rest_1.Octokit({ auth: process.env.GITHUB_TOKEN });
-async function fetchAndParseVersion(language, githubOrg, githubRepoName) {
-    switch (language) {
-        case language_1.Language.java: {
-            const pomXml = await fetchFileFromBranch({
-                owner: githubOrg,
-                path: 'pom.xml',
-                repo: githubRepoName
-            });
-            const javaSdkVersionMatch = pomXml.match(/<version>([\d.]+)<\/version>/);
-            return javaSdkVersionMatch ? javaSdkVersionMatch[1] : constants_1.DEFAULT_SDK_VERSION;
-        }
-        case language_1.Language.typescript: {
-            const packageJsonContent = await fetchFileFromBranch({
-                owner: githubOrg,
-                path: 'package.json',
-                repo: githubRepoName
-            });
-            const packageJson = JSON.parse(packageJsonContent);
-            return packageJson.version || constants_1.DEFAULT_SDK_VERSION;
-        }
-        default: {
-            return constants_1.DEFAULT_SDK_VERSION;
-        }
-    }
-}
-async function fetchCurrentSdkVersion(language, liblabConfig) {
-    const languageOption = liblabConfig.languageOptions[language];
-    if (!languageOption || !languageOption.githubRepoName) {
-        console.log(`Unable to fetch current ${language} SDK version. No languageOption or githubRepoName defined. Defaulting to ${constants_1.DEFAULT_SDK_VERSION}.`);
-        return constants_1.DEFAULT_SDK_VERSION;
-    }
+async function fetchCurrentSdkVersion(language, githubOrg, githubRepoName) {
     try {
-        return await fetchAndParseVersion(language, liblabConfig.publishing.githubOrg, languageOption.githubRepoName);
+        switch (language) {
+            case language_1.Language.java: {
+                const pomXml = await fetchFileFromBranch({
+                    owner: githubOrg,
+                    path: 'pom.xml',
+                    repo: githubRepoName
+                });
+                const javaSdkVersionMatch = pomXml.match(/<version>([\d.]+)<\/version>/);
+                return javaSdkVersionMatch
+                    ? javaSdkVersionMatch[1]
+                    : constants_1.DEFAULT_SDK_VERSION;
+            }
+            case language_1.Language.typescript: {
+                const packageJsonContent = await fetchFileFromBranch({
+                    owner: githubOrg,
+                    path: 'package.json',
+                    repo: githubRepoName
+                });
+                const packageJson = JSON.parse(packageJsonContent);
+                return packageJson.version || constants_1.DEFAULT_SDK_VERSION;
+            }
+            default: {
+                return constants_1.DEFAULT_SDK_VERSION;
+            }
+        }
     }
     catch (error) {
         console.log(`Unable to fetch current ${language} SDK version. Defaulting to ${constants_1.DEFAULT_SDK_VERSION}.`);
@@ -35090,9 +35084,8 @@ const read_liblab_config_1 = __nccwpck_require__(3029);
 const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
 const fetch_git_repo_files_1 = __nccwpck_require__(4038);
 const constants_1 = __nccwpck_require__(9042);
-async function bumpSdkVersionOrDefault(language, liblabConfig, languageVersion) {
-    const languageOptions = liblabConfig.languageOptions;
-    const currentSdkVersion = await (0, fetch_git_repo_files_1.fetchCurrentSdkVersion)(language, liblabConfig);
+async function bumpSdkVersionOrDefault(language, githubOrg, githubRepoName, liblabVersion, languageVersion) {
+    const currentSdkVersion = await (0, fetch_git_repo_files_1.fetchCurrentSdkVersion)(language, githubOrg, githubRepoName);
     if (!currentSdkVersion) {
         console.log(`No SDK version set for ${language}, setting default version ${constants_1.DEFAULT_SDK_VERSION}`);
         return constants_1.DEFAULT_SDK_VERSION;
@@ -35101,13 +35094,12 @@ async function bumpSdkVersionOrDefault(language, liblabConfig, languageVersion) 
     if (!sdkVersion) {
         throw new Error(`The ${language} SDK version is not a valid semver format.`);
     }
-    const liblabVersion = languageOptions[language]?.liblabVersion || liblabConfig.liblabVersion;
     const shouldBumpMajor = languageVersion &&
         semver_1.default.parse(languageVersion)?.major.toString() !== liblabVersion;
     const bumpedSdkVersion = shouldBumpMajor
         ? `${sdkVersion.inc('major').major.toString()}.0.0`
         : sdkVersion.inc('patch').version;
-    console.log(`Bumping SDK version for ${language} from ${currentSdkVersion} to ${bumpedSdkVersion}`);
+    console.log(`Bumping ${shouldBumpMajor ? 'major' : 'patch'} SDK version for ${language} from ${currentSdkVersion} to ${bumpedSdkVersion}`);
     return bumpedSdkVersion;
 }
 exports.bumpSdkVersionOrDefault = bumpSdkVersionOrDefault;
@@ -35129,7 +35121,8 @@ async function setLanguagesForUpdate() {
         // No manifest means that the SDK hasn't been built before, therefor we want to update
         !manifest ||
             (await shouldUpdateLanguage(language, manifest.liblabVersion, liblabConfig))) {
-            languageOption.sdkVersion = await bumpSdkVersionOrDefault(language, liblabConfig, manifest?.liblabVersion);
+            const liblabVersion = languageOption.liblabVersion || liblabConfig.liblabVersion || '1';
+            languageOption.sdkVersion = await bumpSdkVersionOrDefault(language, liblabConfig.publishing.githubOrg, languageOption.githubRepoName, liblabVersion, manifest?.liblabVersion);
             languagesToUpdate.push(language);
         }
     }
