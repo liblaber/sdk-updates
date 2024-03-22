@@ -34845,14 +34845,16 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.cmd = void 0;
 const process_1 = __importDefault(__nccwpck_require__(7282));
 const child_process_1 = __nccwpck_require__(2081);
+const cmdOutput = [];
 async function cmd(...command) {
     const spawnProcess = (0, child_process_1.spawn)(command[0], command.slice(1), {
-        stdio: 'inherit',
         env: {
             ...process_1.default.env
         }
     });
     return new Promise((resolve, reject) => {
+        spawnProcess.stdout.on('data', handleProcessData);
+        spawnProcess.stderr.on('data', handleProcessData);
         spawnProcess.on('exit', code => {
             if (code === 0) {
                 resolve(code);
@@ -34867,6 +34869,15 @@ async function cmd(...command) {
     });
 }
 exports.cmd = cmd;
+function handleProcessData(data) {
+    const lines = data.toString().split('\n');
+    for (const line of lines) {
+        if (!cmdOutput.includes(line)) {
+            console.log(line);
+            cmdOutput.push(line);
+        }
+    }
+}
 
 
 /***/ }),
@@ -34905,7 +34916,7 @@ async function fetchCurrentSdkVersion(language, githubOrg, githubRepoName) {
                     repo: githubRepoName
                 });
                 const versionMatch = pomXml.match(/<version>([\d.]+)<\/version>/);
-                return versionMatch ? versionMatch[1] : constants_1.DEFAULT_SDK_VERSION;
+                return versionMatch ? versionMatch[1] : undefined;
             }
             case language_1.Language.typescript: {
                 const packageJsonContent = await fetchFileFromBranch({
@@ -34914,7 +34925,7 @@ async function fetchCurrentSdkVersion(language, githubOrg, githubRepoName) {
                     repo: githubRepoName
                 });
                 const packageJson = JSON.parse(packageJsonContent);
-                return packageJson.version || constants_1.DEFAULT_SDK_VERSION;
+                return packageJson.version || undefined;
             }
             case language_1.Language.python: {
                 const setupPy = await fetchFileFromBranch({
@@ -34923,7 +34934,7 @@ async function fetchCurrentSdkVersion(language, githubOrg, githubRepoName) {
                     repo: githubRepoName
                 });
                 const versionMatch = setupPy.match(/version='([\d.]+)'/);
-                return versionMatch ? versionMatch[1] : constants_1.DEFAULT_SDK_VERSION;
+                return versionMatch ? versionMatch[1] : undefined;
             }
             case language_1.Language.csharp: {
                 const csproj = await fetchFileFromBranch({
@@ -34932,7 +34943,7 @@ async function fetchCurrentSdkVersion(language, githubOrg, githubRepoName) {
                     repo: githubRepoName
                 });
                 const versionMatch = csproj.match(/<Version>([\d.]+)<\/Version>/);
-                return versionMatch ? versionMatch[1] : constants_1.DEFAULT_SDK_VERSION;
+                return versionMatch ? versionMatch[1] : undefined;
             }
             case language_1.Language.php: {
                 const composerJsonContent = await fetchFileFromBranch({
@@ -34941,7 +34952,7 @@ async function fetchCurrentSdkVersion(language, githubOrg, githubRepoName) {
                     repo: githubRepoName
                 });
                 const composerJson = JSON.parse(composerJsonContent);
-                return composerJson.version || constants_1.DEFAULT_SDK_VERSION;
+                return composerJson.version || undefined;
             }
             case language_1.Language.swift: {
                 const swiftPackageContent = await fetchFileFromBranch({
@@ -34950,7 +34961,7 @@ async function fetchCurrentSdkVersion(language, githubOrg, githubRepoName) {
                     repo: githubRepoName
                 });
                 const versionMatch = swiftPackageContent.match(/version: '([\d.]+)'/);
-                return versionMatch ? versionMatch[1] : constants_1.DEFAULT_SDK_VERSION;
+                return versionMatch ? versionMatch[1] : undefined;
             }
             case language_1.Language.go: {
                 const goModContent = await fetchFileFromBranch({
@@ -34959,7 +34970,7 @@ async function fetchCurrentSdkVersion(language, githubOrg, githubRepoName) {
                     repo: githubRepoName
                 });
                 const versionMatch = goModContent.match(/v([\d.]+)/);
-                return versionMatch ? versionMatch[1] : constants_1.DEFAULT_SDK_VERSION;
+                return versionMatch ? versionMatch[1] : undefined;
             }
             case language_1.Language.terraform: {
                 const versionsTf = await fetchFileFromBranch({
@@ -34968,16 +34979,16 @@ async function fetchCurrentSdkVersion(language, githubOrg, githubRepoName) {
                     repo: githubRepoName
                 });
                 const versionMatch = versionsTf.match(/required_version = "([\d.]+)"/);
-                return versionMatch ? versionMatch[1] : constants_1.DEFAULT_SDK_VERSION;
+                return versionMatch ? versionMatch[1] : undefined;
             }
             default: {
-                return constants_1.DEFAULT_SDK_VERSION;
+                return undefined;
             }
         }
     }
     catch (error) {
-        console.log(`Unable to fetch current ${language} SDK version. Defaulting to ${constants_1.DEFAULT_SDK_VERSION}.`);
-        return constants_1.DEFAULT_SDK_VERSION;
+        console.log(`Unable to fetch current ${language} SDK version from SDK repository ${githubOrg}/${githubRepoName}.`);
+        return undefined;
     }
 }
 exports.fetchCurrentSdkVersion = fetchCurrentSdkVersion;

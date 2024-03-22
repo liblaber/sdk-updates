@@ -1,7 +1,7 @@
 import { Language } from './types/language'
 import { Manifest } from './types/manifest'
 import { Octokit } from '@octokit/rest'
-import { DEFAULT_SDK_VERSION, MANIFEST_PATH } from './constants'
+import { MANIFEST_PATH } from './constants'
 
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
 
@@ -9,7 +9,7 @@ export async function fetchCurrentSdkVersion(
   language: Language,
   githubOrg: string,
   githubRepoName: string
-): Promise<string> {
+): Promise<string | undefined> {
   try {
     switch (language) {
       case Language.java: {
@@ -20,7 +20,7 @@ export async function fetchCurrentSdkVersion(
         })
 
         const versionMatch = pomXml.match(/<version>([\d.]+)<\/version>/)
-        return versionMatch ? versionMatch[1] : DEFAULT_SDK_VERSION
+        return versionMatch ? versionMatch[1] : undefined
       }
       case Language.typescript: {
         const packageJsonContent = await fetchFileFromBranch({
@@ -30,7 +30,7 @@ export async function fetchCurrentSdkVersion(
         })
 
         const packageJson = JSON.parse(packageJsonContent)
-        return packageJson.version || DEFAULT_SDK_VERSION
+        return packageJson.version || undefined
       }
       case Language.python: {
         const setupPy = await fetchFileFromBranch({
@@ -40,7 +40,7 @@ export async function fetchCurrentSdkVersion(
         })
 
         const versionMatch = setupPy.match(/version='([\d.]+)'/)
-        return versionMatch ? versionMatch[1] : DEFAULT_SDK_VERSION
+        return versionMatch ? versionMatch[1] : undefined
       }
       case Language.csharp: {
         const csproj = await fetchFileFromBranch({
@@ -50,7 +50,7 @@ export async function fetchCurrentSdkVersion(
         })
 
         const versionMatch = csproj.match(/<Version>([\d.]+)<\/Version>/)
-        return versionMatch ? versionMatch[1] : DEFAULT_SDK_VERSION
+        return versionMatch ? versionMatch[1] : undefined
       }
       case Language.php: {
         const composerJsonContent = await fetchFileFromBranch({
@@ -60,7 +60,7 @@ export async function fetchCurrentSdkVersion(
         })
 
         const composerJson = JSON.parse(composerJsonContent)
-        return composerJson.version || DEFAULT_SDK_VERSION
+        return composerJson.version || undefined
       }
       case Language.swift: {
         const swiftPackageContent = await fetchFileFromBranch({
@@ -70,7 +70,7 @@ export async function fetchCurrentSdkVersion(
         })
 
         const versionMatch = swiftPackageContent.match(/version: '([\d.]+)'/)
-        return versionMatch ? versionMatch[1] : DEFAULT_SDK_VERSION
+        return versionMatch ? versionMatch[1] : undefined
       }
       case Language.go: {
         const goModContent = await fetchFileFromBranch({
@@ -80,7 +80,7 @@ export async function fetchCurrentSdkVersion(
         })
 
         const versionMatch = goModContent.match(/v([\d.]+)/)
-        return versionMatch ? versionMatch[1] : DEFAULT_SDK_VERSION
+        return versionMatch ? versionMatch[1] : undefined
       }
       case Language.terraform: {
         const versionsTf = await fetchFileFromBranch({
@@ -90,17 +90,17 @@ export async function fetchCurrentSdkVersion(
         })
 
         const versionMatch = versionsTf.match(/required_version = "([\d.]+)"/)
-        return versionMatch ? versionMatch[1] : DEFAULT_SDK_VERSION
+        return versionMatch ? versionMatch[1] : undefined
       }
       default: {
-        return DEFAULT_SDK_VERSION
+        return undefined
       }
     }
   } catch (error) {
     console.log(
-      `Unable to fetch current ${language} SDK version. Defaulting to ${DEFAULT_SDK_VERSION}.`
+      `Unable to fetch current ${language} SDK version from SDK repository ${githubOrg}/${githubRepoName}.`
     )
-    return DEFAULT_SDK_VERSION
+    return undefined
   }
 }
 
