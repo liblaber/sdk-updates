@@ -17,7 +17,9 @@ export const sdkLanguageEngineMap = {
   [Language.typescript]: SdkEngines.CodeGen,
   [Language.go]: SdkEngines.SdkGen,
   [Language.csharp]: SdkEngines.SdkGen,
-  [Language.terraform]: SdkEngines.SdkGen
+  [Language.terraform]: SdkEngines.SdkGen,
+  [Language.swift]: SdkEngines.SdkGen,
+  [Language.php]: SdkEngines.SdkGen
 }
 
 export function getSdkEngine(

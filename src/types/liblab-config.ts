@@ -14,6 +14,8 @@ export interface LibLabConfig {
     go?: LanguageOption
     csharp?: LanguageOption
     terraform?: LanguageOption
+    php?: LanguageOption
+    swift?: LanguageOption
   }
 }
 

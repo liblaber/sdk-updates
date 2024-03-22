@@ -19,10 +19,8 @@ export async function fetchCurrentSdkVersion(
           repo: githubRepoName
         })
 
-        const javaSdkVersionMatch = pomXml.match(/<version>([\d.]+)<\/version>/)
-        return javaSdkVersionMatch
-          ? javaSdkVersionMatch[1]
-          : DEFAULT_SDK_VERSION
+        const versionMatch = pomXml.match(/<version>([\d.]+)<\/version>/)
+        return versionMatch ? versionMatch[1] : DEFAULT_SDK_VERSION
       }
       case Language.typescript: {
         const packageJsonContent = await fetchFileFromBranch({
@@ -32,8 +30,67 @@ export async function fetchCurrentSdkVersion(
         })
 
         const packageJson = JSON.parse(packageJsonContent)
-
         return packageJson.version || DEFAULT_SDK_VERSION
+      }
+      case Language.python: {
+        const setupPy = await fetchFileFromBranch({
+          owner: githubOrg,
+          path: 'package.json',
+          repo: githubRepoName
+        })
+
+        const versionMatch = setupPy.match(/version='([\d.]+)'/)
+        return versionMatch ? versionMatch[1] : DEFAULT_SDK_VERSION
+      }
+      case Language.csharp: {
+        const csproj = await fetchFileFromBranch({
+          owner: githubOrg,
+          path: 'Project.csproj', // Adjust the path as per your C# project structure
+          repo: githubRepoName
+        })
+
+        const versionMatch = csproj.match(/<Version>([\d.]+)<\/Version>/)
+        return versionMatch ? versionMatch[1] : DEFAULT_SDK_VERSION
+      }
+      case Language.php: {
+        const composerJsonContent = await fetchFileFromBranch({
+          owner: githubOrg,
+          path: 'composer.json',
+          repo: githubRepoName
+        })
+
+        const composerJson = JSON.parse(composerJsonContent)
+        return composerJson.version || DEFAULT_SDK_VERSION
+      }
+      case Language.swift: {
+        const swiftPackageContent = await fetchFileFromBranch({
+          owner: githubOrg,
+          path: 'Package.swift',
+          repo: githubRepoName
+        })
+
+        const versionMatch = swiftPackageContent.match(/version: '([\d.]+)'/)
+        return versionMatch ? versionMatch[1] : DEFAULT_SDK_VERSION
+      }
+      case Language.go: {
+        const goModContent = await fetchFileFromBranch({
+          owner: githubOrg,
+          path: 'go.mod',
+          repo: githubRepoName
+        })
+
+        const versionMatch = goModContent.match(/v([\d.]+)/)
+        return versionMatch ? versionMatch[1] : DEFAULT_SDK_VERSION
+      }
+      case Language.terraform: {
+        const versionsTf = await fetchFileFromBranch({
+          owner: githubOrg,
+          path: 'versions.tf',
+          repo: githubRepoName
+        })
+
+        const versionMatch = versionsTf.match(/required_version = "([\d.]+)"/)
+        return versionMatch ? versionMatch[1] : DEFAULT_SDK_VERSION
       }
       default: {
         return DEFAULT_SDK_VERSION

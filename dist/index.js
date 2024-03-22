@@ -34909,10 +34909,8 @@ async function fetchCurrentSdkVersion(language, githubOrg, githubRepoName) {
                     path: 'pom.xml',
                     repo: githubRepoName
                 });
-                const javaSdkVersionMatch = pomXml.match(/<version>([\d.]+)<\/version>/);
-                return javaSdkVersionMatch
-                    ? javaSdkVersionMatch[1]
-                    : constants_1.DEFAULT_SDK_VERSION;
+                const versionMatch = pomXml.match(/<version>([\d.]+)<\/version>/);
+                return versionMatch ? versionMatch[1] : constants_1.DEFAULT_SDK_VERSION;
             }
             case language_1.Language.typescript: {
                 const packageJsonContent = await fetchFileFromBranch({
@@ -34922,6 +34920,60 @@ async function fetchCurrentSdkVersion(language, githubOrg, githubRepoName) {
                 });
                 const packageJson = JSON.parse(packageJsonContent);
                 return packageJson.version || constants_1.DEFAULT_SDK_VERSION;
+            }
+            case language_1.Language.python: {
+                const setupPy = await fetchFileFromBranch({
+                    owner: githubOrg,
+                    path: 'package.json',
+                    repo: githubRepoName
+                });
+                const versionMatch = setupPy.match(/version='([\d.]+)'/);
+                return versionMatch ? versionMatch[1] : constants_1.DEFAULT_SDK_VERSION;
+            }
+            case language_1.Language.csharp: {
+                const csproj = await fetchFileFromBranch({
+                    owner: githubOrg,
+                    path: 'Project.csproj', // Adjust the path as per your C# project structure
+                    repo: githubRepoName
+                });
+                const versionMatch = csproj.match(/<Version>([\d.]+)<\/Version>/);
+                return versionMatch ? versionMatch[1] : constants_1.DEFAULT_SDK_VERSION;
+            }
+            case language_1.Language.php: {
+                const composerJsonContent = await fetchFileFromBranch({
+                    owner: githubOrg,
+                    path: 'composer.json',
+                    repo: githubRepoName
+                });
+                const composerJson = JSON.parse(composerJsonContent);
+                return composerJson.version || constants_1.DEFAULT_SDK_VERSION;
+            }
+            case language_1.Language.swift: {
+                const swiftPackageContent = await fetchFileFromBranch({
+                    owner: githubOrg,
+                    path: 'Package.swift',
+                    repo: githubRepoName
+                });
+                const versionMatch = swiftPackageContent.match(/version: '([\d.]+)'/);
+                return versionMatch ? versionMatch[1] : constants_1.DEFAULT_SDK_VERSION;
+            }
+            case language_1.Language.go: {
+                const goModContent = await fetchFileFromBranch({
+                    owner: githubOrg,
+                    path: 'go.mod',
+                    repo: githubRepoName
+                });
+                const versionMatch = goModContent.match(/v([\d.]+)/);
+                return versionMatch ? versionMatch[1] : constants_1.DEFAULT_SDK_VERSION;
+            }
+            case language_1.Language.terraform: {
+                const versionsTf = await fetchFileFromBranch({
+                    owner: githubOrg,
+                    path: 'versions.tf',
+                    repo: githubRepoName
+                });
+                const versionMatch = versionsTf.match(/required_version = "([\d.]+)"/);
+                return versionMatch ? versionMatch[1] : constants_1.DEFAULT_SDK_VERSION;
             }
             default: {
                 return constants_1.DEFAULT_SDK_VERSION;
@@ -35179,6 +35231,8 @@ var Language;
     Language["typescript"] = "typescript";
     Language["csharp"] = "csharp";
     Language["go"] = "go";
+    Language["php"] = "php";
+    Language["swift"] = "swift";
     Language["terraform"] = "terraform";
 })(Language || (exports.Language = Language = {}));
 
@@ -35209,7 +35263,9 @@ exports.sdkLanguageEngineMap = {
     [language_1.Language.typescript]: SdkEngines.CodeGen,
     [language_1.Language.go]: SdkEngines.SdkGen,
     [language_1.Language.csharp]: SdkEngines.SdkGen,
-    [language_1.Language.terraform]: SdkEngines.SdkGen
+    [language_1.Language.terraform]: SdkEngines.SdkGen,
+    [language_1.Language.swift]: SdkEngines.SdkGen,
+    [language_1.Language.php]: SdkEngines.SdkGen
 };
 function getSdkEngine(language, liblabVersion) {
     if (!liblabVersion || liblabVersion === '1') {

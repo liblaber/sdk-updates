@@ -4,5 +4,7 @@ export enum Language {
   typescript = 'typescript',
   csharp = 'csharp',
   go = 'go',
+  php = 'php',
+  swift = 'swift',
   terraform = 'terraform'
 }
