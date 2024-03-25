@@ -35074,7 +35074,7 @@ async function run() {
         core.exportVariable(LIBLAB_TOKEN_ENV_VAR_NAME, liblabToken);
         core.exportVariable(GITHUB_TOKEN_ENV_VAR_NAME, liblabGithubToken);
         const languagesToUpdate = await (0, set_languages_for_update_1.setLanguagesForUpdate)();
-        if (!languagesToUpdate) {
+        if (languagesToUpdate.length === 0) {
             core.info('************ No languages need an update. Skipping the builds. ************');
             core.setOutput('status', 'skipped');
             return;
@@ -35268,8 +35268,8 @@ var SdkEngines;
 })(SdkEngines || (exports.SdkEngines = SdkEngines = {}));
 var SdkEngineVersions;
 (function (SdkEngineVersions) {
-    SdkEngineVersions["CodeGen"] = "1.1.41";
-    SdkEngineVersions["SdkGen"] = "2.0.20";
+    SdkEngineVersions["CodeGen"] = "1.1.43";
+    SdkEngineVersions["SdkGen"] = "2.0.22";
 })(SdkEngineVersions || (exports.SdkEngineVersions = SdkEngineVersions = {}));
 exports.sdkLanguageEngineMap = {
     [language_1.Language.java]: SdkEngines.CodeGen,

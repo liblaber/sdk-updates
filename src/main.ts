@@ -27,7 +27,7 @@ export async function run(): Promise<void> {
     core.exportVariable(GITHUB_TOKEN_ENV_VAR_NAME, liblabGithubToken)
 
     const languagesToUpdate = await setLanguagesForUpdate()
-    if (!languagesToUpdate) {
+    if (languagesToUpdate.length === 0) {
       core.info(
         '************ No languages need an update. Skipping the builds. ************'
       )
