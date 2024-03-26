@@ -1,7 +1,7 @@
 import { Language } from '../src/types/language';
 import { bumpSdkVersion } from '../src/bump-sdk-version';
 
-describe('bump SDK version or default', () => {
+describe('bump SDK version', () => {
   it('should bump patch version when no major liblabVersion SDK update', async () => {
     const bumpedSdkVersion = await bumpSdkVersion(
       Language.java,
@@ -22,5 +22,11 @@ describe('bump SDK version or default', () => {
     );
 
     expect(bumpedSdkVersion).toEqual('4.0.0');
+  });
+
+  it('should return default 1.0.0 version when sdkVersion not specified', async () => {
+    const bumpedSdkVersion = await bumpSdkVersion(Language.java, '2', '1.5.2');
+
+    expect(bumpedSdkVersion).toEqual('1.0.0');
   });
 });
