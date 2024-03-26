@@ -1,5 +1,5 @@
-import { Language } from './language'
-import { LiblabVersion } from './liblab-config'
+import { Language } from './language';
+import { LiblabVersion } from './liblab-config';
 
 export enum SdkEngines {
   CodeGen = 'code-gen',
@@ -20,20 +20,20 @@ export const sdkLanguageEngineMap = {
   [Language.terraform]: SdkEngines.SdkGen,
   [Language.swift]: SdkEngines.SdkGen,
   [Language.php]: SdkEngines.SdkGen
-}
+};
 
 export function getSdkEngine(
   language: Language,
   liblabVersion?: LiblabVersion
 ): SdkEngines {
   if (!liblabVersion || liblabVersion === '1') {
-    const engine = sdkLanguageEngineMap[language]
+    const engine = sdkLanguageEngineMap[language];
     if (!engine) {
-      throw new Error(`Unsupported language: ${language}`)
+      throw new Error(`Unsupported language: ${language}`);
     }
 
-    return engine
+    return engine;
   }
 
-  return SdkEngines.SdkGen
+  return SdkEngines.SdkGen;
 }

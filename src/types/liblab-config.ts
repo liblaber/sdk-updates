@@ -1,28 +1,28 @@
-import { Language } from './language'
+import { Language } from './language';
 
 export interface LibLabConfig {
-  liblabVersion?: LiblabVersion
-  languages: Language[]
-  specFilePath: string
+  liblabVersion?: LiblabVersion;
+  languages: Language[];
+  specFilePath: string;
   publishing: {
-    githubOrg: string
-  }
+    githubOrg: string;
+  };
   languageOptions: {
-    java?: LanguageOption
-    typescript?: LanguageOption
-    python?: LanguageOption
-    go?: LanguageOption
-    csharp?: LanguageOption
-    terraform?: LanguageOption
-    php?: LanguageOption
-    swift?: LanguageOption
-  }
+    java?: LanguageOption;
+    typescript?: LanguageOption;
+    python?: LanguageOption;
+    go?: LanguageOption;
+    csharp?: LanguageOption;
+    terraform?: LanguageOption;
+    php?: LanguageOption;
+    swift?: LanguageOption;
+  };
 }
 
-export type LiblabVersion = '1' | '2'
+export type LiblabVersion = '1' | '2';
 
 export interface LanguageOption {
-  githubRepoName?: string
-  sdkVersion?: string
-  liblabVersion?: LiblabVersion
+  githubRepoName?: string;
+  sdkVersion?: string;
+  liblabVersion?: LiblabVersion;
 }
