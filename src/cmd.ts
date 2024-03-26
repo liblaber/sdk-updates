@@ -30,7 +30,7 @@ export async function cmd(...command: string[]): Promise<number> {
 function handleProcessData(data: Buffer): void {
   const lines = data.toString().split('\n');
   for (const line of lines) {
-    if (!cmdOutput.includes(line) || cmdOutput.includes('Owner:')) {
+    if (!cmdOutput.includes(line) || line.includes('Owner:')) {
       console.log(line);
       cmdOutput.push(line);
     }
