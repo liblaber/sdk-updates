@@ -34833,6 +34833,41 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 6135:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.bumpSdkVersion = exports.DEFAULT_SDK_VERSION = void 0;
+const semver_1 = __importDefault(__nccwpck_require__(1383));
+exports.DEFAULT_SDK_VERSION = '1.0.0';
+async function bumpSdkVersion(language, liblabVersion, languageVersion, currentSdkVersion) {
+    if (!currentSdkVersion) {
+        console.log(`No SDK version set for ${language}, setting default version ${exports.DEFAULT_SDK_VERSION}`);
+        return exports.DEFAULT_SDK_VERSION;
+    }
+    const currentSdkVersionSemVer = semver_1.default.parse(currentSdkVersion);
+    if (!currentSdkVersionSemVer) {
+        console.log(`The ${language} SDK version ${currentSdkVersion} is not a valid semver format. Defaulting to ${exports.DEFAULT_SDK_VERSION}.`);
+        return exports.DEFAULT_SDK_VERSION;
+    }
+    const shouldBumpMajor = languageVersion &&
+        semver_1.default.parse(languageVersion)?.major.toString() !== liblabVersion;
+    const bumpedSdkVersion = shouldBumpMajor
+        ? `${currentSdkVersionSemVer.inc('major').major.toString()}.0.0`
+        : currentSdkVersionSemVer.inc('patch').version;
+    console.log(`Bumping ${shouldBumpMajor ? 'major' : 'patch'} SDK version for ${language} from ${currentSdkVersion} to ${bumpedSdkVersion}`);
+    return bumpedSdkVersion;
+}
+exports.bumpSdkVersion = bumpSdkVersion;
+
+
+/***/ }),
+
 /***/ 5529:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -34882,121 +34917,21 @@ function handleProcessData(data) {
 
 /***/ }),
 
-/***/ 9042:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DEFAULT_SDK_VERSION = exports.MANIFEST_PATH = void 0;
-exports.MANIFEST_PATH = '.manifest.json';
-exports.DEFAULT_SDK_VERSION = '1.0.0';
-
-
-/***/ }),
-
 /***/ 4038:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.fetchFileFromBranch = exports.fetchManifestFile = exports.fetchCurrentSdkVersion = void 0;
-const language_1 = __nccwpck_require__(7930);
+exports.fetchFileFromBranch = exports.fetchManifestFile = void 0;
 const rest_1 = __nccwpck_require__(5375);
-const constants_1 = __nccwpck_require__(9042);
+const MANIFEST_PATH = '.manifest.json';
 const octokit = new rest_1.Octokit({ auth: process.env.GITHUB_TOKEN });
-async function fetchCurrentSdkVersion(language, githubOrg, githubRepoName) {
-    try {
-        switch (language) {
-            case language_1.Language.java: {
-                const pomXml = await fetchFileFromBranch({
-                    owner: githubOrg,
-                    path: 'pom.xml',
-                    repo: githubRepoName
-                });
-                const versionMatch = pomXml.match(/<version>([\d.]+)<\/version>/);
-                return versionMatch ? versionMatch[1] : undefined;
-            }
-            case language_1.Language.typescript: {
-                const packageJsonContent = await fetchFileFromBranch({
-                    owner: githubOrg,
-                    path: 'package.json',
-                    repo: githubRepoName
-                });
-                const packageJson = JSON.parse(packageJsonContent);
-                return packageJson.version || undefined;
-            }
-            case language_1.Language.python: {
-                const setupPy = await fetchFileFromBranch({
-                    owner: githubOrg,
-                    path: 'package.json',
-                    repo: githubRepoName
-                });
-                const versionMatch = setupPy.match(/version='([\d.]+)'/);
-                return versionMatch ? versionMatch[1] : undefined;
-            }
-            case language_1.Language.csharp: {
-                const csproj = await fetchFileFromBranch({
-                    owner: githubOrg,
-                    path: 'Project.csproj', // Adjust the path as per your C# project structure
-                    repo: githubRepoName
-                });
-                const versionMatch = csproj.match(/<Version>([\d.]+)<\/Version>/);
-                return versionMatch ? versionMatch[1] : undefined;
-            }
-            case language_1.Language.php: {
-                const composerJsonContent = await fetchFileFromBranch({
-                    owner: githubOrg,
-                    path: 'composer.json',
-                    repo: githubRepoName
-                });
-                const composerJson = JSON.parse(composerJsonContent);
-                return composerJson.version || undefined;
-            }
-            case language_1.Language.swift: {
-                const swiftPackageContent = await fetchFileFromBranch({
-                    owner: githubOrg,
-                    path: 'Package.swift',
-                    repo: githubRepoName
-                });
-                const versionMatch = swiftPackageContent.match(/version: '([\d.]+)'/);
-                return versionMatch ? versionMatch[1] : undefined;
-            }
-            case language_1.Language.go: {
-                const goModContent = await fetchFileFromBranch({
-                    owner: githubOrg,
-                    path: 'go.mod',
-                    repo: githubRepoName
-                });
-                const versionMatch = goModContent.match(/v([\d.]+)/);
-                return versionMatch ? versionMatch[1] : undefined;
-            }
-            case language_1.Language.terraform: {
-                const versionsTf = await fetchFileFromBranch({
-                    owner: githubOrg,
-                    path: 'versions.tf',
-                    repo: githubRepoName
-                });
-                const versionMatch = versionsTf.match(/required_version = "([\d.]+)"/);
-                return versionMatch ? versionMatch[1] : undefined;
-            }
-            default: {
-                return undefined;
-            }
-        }
-    }
-    catch (error) {
-        console.log(`Unable to fetch current ${language} SDK version from SDK repository ${githubOrg}/${githubRepoName}.`);
-        return undefined;
-    }
-}
-exports.fetchCurrentSdkVersion = fetchCurrentSdkVersion;
 async function fetchManifestFile(githubOrg, githubRepoName) {
     try {
         const remoteManifestJson = await fetchFileFromBranch({
             owner: githubOrg,
-            path: constants_1.MANIFEST_PATH,
+            path: MANIFEST_PATH,
             repo: githubRepoName
         });
         return JSON.parse(remoteManifestJson);
@@ -35139,33 +35074,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setLanguagesForUpdate = exports.bumpSdkVersionOrDefault = void 0;
+exports.setLanguagesForUpdate = void 0;
 const semver_1 = __importDefault(__nccwpck_require__(1383));
 const sdk_language_engine_map_1 = __nccwpck_require__(1911);
 const read_liblab_config_1 = __nccwpck_require__(3029);
 const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
 const fetch_git_repo_files_1 = __nccwpck_require__(4038);
-const constants_1 = __nccwpck_require__(9042);
-async function bumpSdkVersionOrDefault(language, githubOrg, githubRepoName, liblabVersion, languageVersion) {
-    const currentSdkVersion = await (0, fetch_git_repo_files_1.fetchCurrentSdkVersion)(language, githubOrg, githubRepoName);
-    if (!currentSdkVersion) {
-        console.log(`No SDK version set for ${language}, setting default version ${constants_1.DEFAULT_SDK_VERSION}`);
-        return constants_1.DEFAULT_SDK_VERSION;
-    }
-    const currentSdkVersionSemVer = semver_1.default.parse(currentSdkVersion);
-    if (!currentSdkVersionSemVer) {
-        console.log(`The ${language} SDK version ${currentSdkVersion} is not a valid semver format. Defaulting to ${constants_1.DEFAULT_SDK_VERSION}.`);
-        return constants_1.DEFAULT_SDK_VERSION;
-    }
-    const shouldBumpMajor = languageVersion &&
-        semver_1.default.parse(languageVersion)?.major.toString() !== liblabVersion;
-    const bumpedSdkVersion = shouldBumpMajor
-        ? `${currentSdkVersionSemVer.inc('major').major.toString()}.0.0`
-        : currentSdkVersionSemVer.inc('patch').version;
-    console.log(`Bumping ${shouldBumpMajor ? 'major' : 'patch'} SDK version for ${language} from ${currentSdkVersion} to ${bumpedSdkVersion}`);
-    return bumpedSdkVersion;
-}
-exports.bumpSdkVersionOrDefault = bumpSdkVersionOrDefault;
+const bump_sdk_version_1 = __nccwpck_require__(6135);
+const DEFAULT_LIBLAB_VERSION = '1';
 async function setLanguagesForUpdate() {
     const liblabConfig = await (0, read_liblab_config_1.readLiblabConfig)();
     const languagesToUpdate = [];
@@ -35184,8 +35100,10 @@ async function setLanguagesForUpdate() {
         // No manifest means that the SDK hasn't been built before, therefor we want to update
         !manifest ||
             (await shouldUpdateLanguage(language, manifest.liblabVersion, liblabConfig))) {
-            const liblabVersion = languageOption.liblabVersion || liblabConfig.liblabVersion || '1';
-            languageOption.sdkVersion = await bumpSdkVersionOrDefault(language, liblabConfig.publishing.githubOrg, languageOption.githubRepoName, liblabVersion, manifest?.liblabVersion);
+            const liblabVersion = languageOption.liblabVersion ||
+                liblabConfig.liblabVersion ||
+                DEFAULT_LIBLAB_VERSION;
+            languageOption.sdkVersion = await (0, bump_sdk_version_1.bumpSdkVersion)(language, liblabVersion, manifest?.liblabVersion, manifest?.config.sdkVersion);
             languagesToUpdate.push(language);
         }
         else {

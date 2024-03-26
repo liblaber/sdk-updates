@@ -3,8 +3,11 @@ import { setLanguagesForUpdate } from './set-languages-for-update'
 import { cmd } from './cmd'
 
 const LIBLAB_TOKEN_INPUT_KEY = 'liblab_token'
+
 const LIBLAB_GITHUB_TOKEN_INPUT_KEY = 'liblab_github_token'
+
 const GITHUB_TOKEN_ENV_VAR_NAME = 'GITHUB_TOKEN'
+
 const LIBLAB_TOKEN_ENV_VAR_NAME = 'LIBLAB_TOKEN'
 
 /**
