@@ -31,23 +31,21 @@ export async function run(): Promise<void> {
 
     const languagesToUpdate = await setLanguagesForUpdate();
     if (languagesToUpdate.length === 0) {
-      core.info(
-        '************ No languages need an update. Skipping the builds. ************'
-      );
+      logInfoWithStars('No languages need an update. Skipping the builds.');
       core.setOutput('status', 'skipped');
       return;
     }
-    core.info(
-      `************ Languages that need update: ${languagesToUpdate.join(', ')} ************`
+    logInfoWithStars(
+      `Languages that need SDK update: ${languagesToUpdate.join(', ')}`
     );
 
-    core.info('************ Building SDKs ************');
+    logInfoWithStars('Building SDKs');
     await cmd('npx', '--yes', 'liblab', 'build', '--yes');
-    core.info('************ Finished building SDKs ************');
+    logInfoWithStars('Finished building SDKs');
 
-    core.info('************ Publishing PRs ************');
+    logInfoWithStars('Publishing PRs');
     await cmd('npx', '--yes', 'liblab', 'pr');
-    core.info('************ Finished publishing PRs ************');
+    logInfoWithStars('Finished publishing PRs');
 
     core.setOutput('status', `success`);
   } catch (error) {
@@ -57,4 +55,8 @@ export async function run(): Promise<void> {
       core.setFailed(error.message);
     }
   }
+}
+
+function logInfoWithStars(text: string): void {
+  core.info(`************ ${text} ************`);
 }

@@ -35010,17 +35010,17 @@ async function run() {
         core.exportVariable(GITHUB_TOKEN_ENV_VAR_NAME, liblabGithubToken);
         const languagesToUpdate = await (0, set_languages_for_update_1.setLanguagesForUpdate)();
         if (languagesToUpdate.length === 0) {
-            core.info('************ No languages need an update. Skipping the builds. ************');
+            logInfoWithStars('No languages need an update. Skipping the builds.');
             core.setOutput('status', 'skipped');
             return;
         }
-        core.info(`************ Languages that need update: ${languagesToUpdate.join(', ')} ************`);
-        core.info('************ Building SDKs ************');
+        logInfoWithStars(`Languages that need SDK update: ${languagesToUpdate.join(', ')}`);
+        logInfoWithStars('Building SDKs');
         await (0, cmd_1.cmd)('npx', '--yes', 'liblab', 'build', '--yes');
-        core.info('************ Finished building SDKs ************');
-        core.info('************ Publishing PRs ************');
+        logInfoWithStars('Finished building SDKs');
+        logInfoWithStars('Publishing PRs');
         await (0, cmd_1.cmd)('npx', '--yes', 'liblab', 'pr');
-        core.info('************ Finished publishing PRs ************');
+        logInfoWithStars('Finished publishing PRs');
         core.setOutput('status', `success`);
     }
     catch (error) {
@@ -35032,6 +35032,9 @@ async function run() {
     }
 }
 exports.run = run;
+function logInfoWithStars(text) {
+    core.info(`************ ${text} ************`);
+}
 
 
 /***/ }),
