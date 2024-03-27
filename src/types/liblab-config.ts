@@ -1,6 +1,6 @@
 import { Language } from './language';
 
-export interface LibLabConfig {
+export interface LiblabConfig {
   liblabVersion?: LiblabVersion;
   languages: Language[];
   specFilePath: string;

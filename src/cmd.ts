@@ -10,14 +10,16 @@ export async function cmd(...command: string[]): Promise<number> {
     }
   });
   return new Promise((resolve, reject) => {
-    spawnProcess.stdout.on('data', handleProcessData);
-    spawnProcess.stderr.on('data', handleProcessData);
+    spawnProcess.stdout.on('data', deduplicateOutputAndPrint);
+    spawnProcess.stderr.on('data', deduplicateOutputAndPrint);
     spawnProcess.on('exit', code => {
       if (code === 0) {
         resolve(code);
       } else {
         reject(
-          new Error(`Command '${command.join(' ')}' exited with code ${code}`)
+          new Error(
+            `Command '${printCommand(command)}' exited with code ${code}`
+          )
         );
       }
     });
@@ -27,7 +29,17 @@ export async function cmd(...command: string[]): Promise<number> {
   });
 }
 
-function handleProcessData(data: Buffer): void {
+function printCommand(command: string[]): string {
+  const liblabIndex = command.indexOf('liblab');
+
+  if (liblabIndex !== -1) {
+    return `[${command.slice(liblabIndex).join(' ')}]`;
+  }
+
+  return `[${command.join(' ')}]`;
+}
+
+function deduplicateOutputAndPrint(data: Buffer): void {
   const lines = data.toString().split('\n');
   for (const line of lines) {
     if (!cmdOutput.includes(line) || line.includes('Owner:')) {

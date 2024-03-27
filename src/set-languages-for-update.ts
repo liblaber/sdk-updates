@@ -1,4 +1,4 @@
-import { LibLabConfig, LiblabVersion } from './types/liblab-config';
+import { LiblabConfig, LiblabVersion } from './types/liblab-config';
 import { Language } from './types/language';
 import semver from 'semver';
 import {
@@ -77,7 +77,7 @@ export async function setLanguagesForUpdate(): Promise<string[]> {
 async function shouldUpdateLanguage(
   language: Language,
   languageVersion: string,
-  liblabConfig: LibLabConfig
+  liblabConfig: LiblabConfig
 ): Promise<boolean> {
   const [latestCodeGenVersion, latestSdkGenVersion] = [
     SdkEngineVersions.CodeGen,
