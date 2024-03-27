@@ -9,7 +9,7 @@ branding:
 
 inputs:
   liblab_token:
-    description: 'The Liblab authentication token provided by liblab CLI'
+    description: 'The liblab authentication token provided by liblab CLI'
     required: true
   liblab_github_token:
     description: 'The github token that will allow posting PRs to SDK repos'
