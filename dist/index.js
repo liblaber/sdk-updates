@@ -35135,7 +35135,8 @@ async function shouldUpdateLanguage(language, languageVersion, liblabConfig) {
     const codeGenHasNewVersion = semver_1.default.gt(latestCodeGenVersion, languageVersion);
     const sdkGenHasNewVersion = semver_1.default.gt(latestSdkGenVersion, languageVersion);
     const liblabVersion = liblabConfig.languageOptions[language]?.liblabVersion ||
-        liblabConfig.liblabVersion;
+        liblabConfig.liblabVersion ||
+        '1';
     if (liblabVersion === '1') {
         return ((codeGenHasNewVersion &&
             isSupported(sdk_language_engine_map_1.SdkEngines.CodeGen, language, liblabVersion)) ||

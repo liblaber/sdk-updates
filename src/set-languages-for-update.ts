@@ -89,7 +89,8 @@ async function shouldUpdateLanguage(
 
   const liblabVersion =
     liblabConfig.languageOptions[language]?.liblabVersion ||
-    liblabConfig.liblabVersion;
+    liblabConfig.liblabVersion ||
+    '1';
 
   if (liblabVersion === '1') {
     return (
