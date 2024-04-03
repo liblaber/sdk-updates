@@ -10,6 +10,8 @@ const GITHUB_TOKEN_ENV_VAR_NAME = 'GITHUB_TOKEN';
 
 const LIBLAB_TOKEN_ENV_VAR_NAME = 'LIBLAB_TOKEN';
 
+const LIBLAB_CI_ENV_VAR_NAME = 'LIBLAB_CI';
+
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -28,6 +30,7 @@ export async function run(): Promise<void> {
 
     core.exportVariable(LIBLAB_TOKEN_ENV_VAR_NAME, liblabToken);
     core.exportVariable(GITHUB_TOKEN_ENV_VAR_NAME, liblabGithubToken);
+    core.exportVariable(LIBLAB_CI_ENV_VAR_NAME, true);
 
     const languagesToUpdate = await setLanguagesForUpdate();
     if (languagesToUpdate.length === 0) {

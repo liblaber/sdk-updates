@@ -35001,6 +35001,7 @@ const LIBLAB_TOKEN_INPUT_KEY = 'liblab_token';
 const LIBLAB_GITHUB_TOKEN_INPUT_KEY = 'liblab_github_token';
 const GITHUB_TOKEN_ENV_VAR_NAME = 'GITHUB_TOKEN';
 const LIBLAB_TOKEN_ENV_VAR_NAME = 'LIBLAB_TOKEN';
+const LIBLAB_CI_ENV_VAR_NAME = 'LIBLAB_CI';
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -35015,6 +35016,7 @@ async function run() {
         });
         core.exportVariable(LIBLAB_TOKEN_ENV_VAR_NAME, liblabToken);
         core.exportVariable(GITHUB_TOKEN_ENV_VAR_NAME, liblabGithubToken);
+        core.exportVariable(LIBLAB_CI_ENV_VAR_NAME, true);
         const languagesToUpdate = await (0, set_languages_for_update_1.setLanguagesForUpdate)();
         if (languagesToUpdate.length === 0) {
             logInfoWithStars('No languages need an update. Skipping the builds.');
