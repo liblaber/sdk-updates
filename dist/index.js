@@ -34933,7 +34933,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.fetchFileFromBranch = exports.fetchManifestFile = void 0;
 const rest_1 = __nccwpck_require__(5375);
 const MANIFEST_PATH = '.manifest.json';
-const octokit = new rest_1.Octokit({ auth: process.env.GITHUB_TOKEN });
+const octokit = new rest_1.Octokit({ auth: process.env.LIBLAB_GITHUB_TOKEN });
 async function fetchManifestFile(githubOrg, githubRepoName) {
     try {
         const remoteManifestJson = await fetchFileFromBranch({
@@ -34999,7 +34999,7 @@ const set_languages_for_update_1 = __nccwpck_require__(181);
 const cmd_1 = __nccwpck_require__(5529);
 const LIBLAB_TOKEN_INPUT_KEY = 'liblab_token';
 const LIBLAB_GITHUB_TOKEN_INPUT_KEY = 'liblab_github_token';
-const GITHUB_TOKEN_ENV_VAR_NAME = 'GITHUB_TOKEN';
+const LIBLAB_GITHUB_TOKEN_ENV_VAR_NAME = 'LIBLAB_GITHUB_TOKEN';
 const LIBLAB_TOKEN_ENV_VAR_NAME = 'LIBLAB_TOKEN';
 const LIBLAB_CI_ENV_VAR_NAME = 'LIBLAB_CI';
 /**
@@ -35015,7 +35015,7 @@ async function run() {
             required: true
         });
         core.exportVariable(LIBLAB_TOKEN_ENV_VAR_NAME, liblabToken);
-        core.exportVariable(GITHUB_TOKEN_ENV_VAR_NAME, liblabGithubToken);
+        core.exportVariable(LIBLAB_GITHUB_TOKEN_ENV_VAR_NAME, liblabGithubToken);
         core.exportVariable(LIBLAB_CI_ENV_VAR_NAME, true);
         const languagesToUpdate = await (0, set_languages_for_update_1.setLanguagesForUpdate)();
         if (languagesToUpdate.length === 0) {
@@ -35200,7 +35200,7 @@ var SdkEngines;
 var SdkEngineVersions;
 (function (SdkEngineVersions) {
     SdkEngineVersions["CodeGen"] = "1.1.44";
-    SdkEngineVersions["SdkGen"] = "2.1.1";
+    SdkEngineVersions["SdkGen"] = "2.1.3";
 })(SdkEngineVersions || (exports.SdkEngineVersions = SdkEngineVersions = {}));
 exports.sdkLanguageEngineMap = {
     [language_1.Language.java]: SdkEngines.CodeGen,

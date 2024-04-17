@@ -3,7 +3,7 @@ import { Octokit } from '@octokit/rest';
 
 const MANIFEST_PATH = '.manifest.json';
 
-const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+const octokit = new Octokit({ auth: process.env.LIBLAB_GITHUB_TOKEN });
 
 export async function fetchManifestFile(
   githubOrg: string,
