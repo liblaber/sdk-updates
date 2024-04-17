@@ -35200,7 +35200,7 @@ var SdkEngines;
 var SdkEngineVersions;
 (function (SdkEngineVersions) {
     SdkEngineVersions["CodeGen"] = "1.1.44";
-    SdkEngineVersions["SdkGen"] = "2.1.1";
+    SdkEngineVersions["SdkGen"] = "2.1.3";
 })(SdkEngineVersions || (exports.SdkEngineVersions = SdkEngineVersions = {}));
 exports.sdkLanguageEngineMap = {
     [language_1.Language.java]: SdkEngines.CodeGen,
